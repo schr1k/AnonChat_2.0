@@ -1,0 +1,30 @@
+Metadata-Version: 2.1
+Name: magic-filter
+Version: 1.0.9
+Summary: This package provides magic filter based on dynamic attribute getter
+Home-page: https://github.com/aiogram/magic-filter/
+License: MIT
+Keywords: magic,filter,validation
+Author: Alex Root Junior
+Author-email: pypi@aiogram.dev
+Requires-Python: >=3.7,<4.0
+Classifier: Development Status :: 3 - Alpha
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Topic :: Utilities
+Classifier: Typing :: Typed
+Project-URL: Repository, https://github.com/aiogram/magic-filter/
+Description-Content-Type: text/markdown
+
+# magic-filter
+
+This package provides magic filter based on dynamic attribute getter
+
