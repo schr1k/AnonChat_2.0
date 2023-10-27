@@ -1,3 +1,4 @@
-psycopg2
-aiogram
-aiopayok
+aiogram==3.1.1
+asyncpg==0.28.0
+redis==5.0.1
+yookassa==2.4.0
