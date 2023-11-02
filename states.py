@@ -26,3 +26,11 @@ class SexState(StatesGroup):
 class Search(StatesGroup):
     searching = State()
 
+
+class Bug(StatesGroup):
+    bug = State()
+
+
+class Idea(StatesGroup):
+    idea = State()
+

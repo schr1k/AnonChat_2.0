@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import sys
 from datetime import datetime, timedelta
 
 from aiogram import Bot, Dispatcher, F
@@ -12,7 +13,7 @@ from redis.asyncio import Redis
 
 from config import *
 import kb
-from states import RegState, AgeState, NameState, SexState, Chatting
+from states import *
 from db import DB
 from payments import *
 
@@ -26,12 +27,13 @@ storage = RedisStorage(redis)
 bot = Bot(token=TOKEN)
 dp = Dispatcher(storage=storage)
 
-logging.basicConfig(filename="all.log", level=logging.INFO,
+logging.basicConfig(filename="all.log", level=logging.INFO, stream=sys.stdout,
                     format='%(asctime)s - %(levelname)s - %(filename)s function: %(funcName)s line: %(lineno)d - %(message)s')
 errors = logging.getLogger("errors")
 errors.setLevel(logging.ERROR)
 fh = logging.FileHandler("errors.log")
 formatter = logging.Formatter(
+
     '%(asctime)s - %(levelname)s - %(filename)s function: %(funcName)s line: %(lineno)d - %(message)s')
 fh.setFormatter(formatter)
 errors.addHandler(fh)
@@ -100,6 +102,50 @@ async def lobby(call: CallbackQuery):
 async def help(message: Message):
     try:
         await message.answer(f'/start - В начало')
+    except Exception as e:
+        errors.error(e)
+
+
+@dp.message(Command('bug'))
+async def bug(message: Message, state: FSMContext):
+    try:
+        await message.answer('Опишите ошибку с которой вы столкнулись.')
+        await state.set_state(Bug.bug)
+    except Exception as e:
+        errors.error(e)
+
+
+@dp.message(Bug.bug)
+async def set_bug(message: Message, state: FSMContext):
+    try:
+        sender = message.from_user.id if message.from_user.username is None else f'@{message.from_user.username}'
+        await bot.send_message(BUGS_GROUP_ID, f'Отправитель: {sender}.\n'
+                                              f'Сообщение: {message.text}.')
+        await message.answer('Разработчик оповещен о проблеме и скоро ее исправит.\n'
+                             'Спасибо за помощь!')
+        await state.clear()
+    except Exception as e:
+        errors.error(e)
+
+
+@dp.message(Command('idea'))
+async def idea(message: Message, state: FSMContext):
+    try:
+        await message.answer('Что вы хотите предложить?')
+        await state.set_state(Idea.idea)
+    except Exception as e:
+        errors.error(e)
+
+
+@dp.message(Idea.idea)
+async def set_idea(message: Message, state: FSMContext):
+    try:
+        sender = message.from_user.id if message.from_user.username is None else f'@{message.from_user.username}'
+        await bot.send_message(IDEAS_GROUP_ID, f'Отправитель: {sender}.\n'
+                                               f'Сообщение: {message.text}.')
+        await message.answer('Идея передана разработчику.\n'
+                             'Спасибо за помощь!')
+        await state.clear()
     except Exception as e:
         errors.error(e)
 
@@ -212,8 +258,8 @@ async def edit_name(call: CallbackQuery, state: FSMContext):
 @dp.message(NameState.name)
 async def set_name(message: Message, state: FSMContext):
     try:
-        await db.update_name(message.text, str(message.from_user.id))
-        await message.answer(text='Имя сохранено.', reply_markup=kb.to_main_kb)
+        await db.update_name(str(message.from_user.id), message.text)
+        await message.answer(text='Имя сохранено.', reply_markup=kb.to_settings_kb)
         await state.clear()
     except Exception as e:
         errors.error(e)
@@ -234,7 +280,7 @@ async def edit_age(call: CallbackQuery, state: FSMContext):
 async def set_age(message: Message, state: FSMContext):
     try:
         await db.update_age(str(message.from_user.id), message.text)
-        await message.answer('Возраст сохранен.', reply_markup=kb.to_main_kb)
+        await message.answer('Возраст сохранен.', reply_markup=kb.to_settings_kb)
         await state.clear()
     except Exception as e:
         errors.error(e)
@@ -256,7 +302,7 @@ async def set_sex(call: CallbackQuery, state: FSMContext):
     try:
         await call.answer()
         await db.update_sex(str(call.from_user.id), call.data)
-        await bot.send_message(call.from_user.id, 'Пол сохранен.', reply_markup=kb.to_main_kb)
+        await bot.send_message(call.from_user.id, 'Пол сохранен.', reply_markup=kb.to_settings_kb)
         await state.clear()
     except Exception as e:
         errors.error(e)
@@ -274,7 +320,6 @@ async def stats(call: CallbackQuery):
                                          f'👎 Дизлайков: {await db.select_dislikes(str(call.from_user.id))}\n'
                                          f'👨‍💻 Пользователей приглашено: {await db.select_refs(str(call.from_user.id))}',
                                     reply_markup=kb.statistic_kb)
-
     except Exception as e:
         errors.error(e)
 
@@ -401,17 +446,15 @@ async def vip(call: CallbackQuery):
                 await bot.edit_message_text(chat_id=call.from_user.id, message_id=call.message.message_id,
                                             text=f'Вип дает:\n'
                                                  f'1) Поиск по полу.\n'
-                                                 f'2) Подробная информацию о собеседнике: отзывы, имя, пол, возраст, страна...\n'
-                                                 f'3) <b>Первое место в очереди.</b>\n'
-                                                 f'<i>Это далеко не все, функции будут постоянно добавляться</i>.',
+                                                 f'2) Подробная информацию о собеседнике: отзывы, имя, пол, возраст.\n'
+                                                 f'<b>Сейчас подключены ТЕСТОВЫЕ платежи, то есть деньги НЕ будут списаны, но вип вы получите.</b>',
                                             reply_markup=kb.vip_kb, parse_mode='HTML')
         else:
             await bot.edit_message_text(chat_id=call.from_user.id, message_id=call.message.message_id,
                                         text=f'Вип дает:\n'
                                              f'1) Поиск по полу.\n'
-                                             f'2) Подробная информацию о собеседнике: отзывы, имя, возраст, пол, страна, город\n'
-                                             f'3) <b>Первое место в очереди.</b>\n'
-                                             f'<i>Это далеко не все, функции будут постоянно добавляться</i>.',
+                                             f'2) Подробная информацию о собеседнике: отзывы, имя, пол, возраст.\n'
+                                             f'<b>Сейчас подключены ТЕСТОВЫЕ платежи, то есть деньги НЕ будут списаны, но вип вы получите.</b>',
                                         reply_markup=kb.vip_kb, parse_mode='HTML')
     except Exception as e:
         errors.error(e)
@@ -433,7 +476,8 @@ async def buy_day(call: CallbackQuery):
         await call.answer()
         url, payment_id = create_payment(20, 'Вип на 1 день')
         await bot.edit_message_text(chat_id=call.from_user.id, message_id=call.message.message_id,
-                                    text=f'<a href="{url}">Оплатить 20 рублей</a>', parse_mode='HTML')
+                                    text=f'<a href="{url}">Оплатить 20 рублей</a>', parse_mode='HTML',
+                                    reply_markup=kb.to_buy_kb)
         c = 0
         paid = False
         while True:
@@ -470,7 +514,8 @@ async def buy_week(call: CallbackQuery):
         await call.answer()
         url, payment_id = create_payment(100, 'Вип на 1 неделю')
         await bot.edit_message_text(chat_id=call.from_user.id, message_id=call.message.message_id,
-                                    text=f'<a href="{url}">Оплатить 100 рублей</a>', parse_mode='HTML')
+                                    text=f'<a href="{url}">Оплатить 100 рублей</a>', parse_mode='HTML',
+                                    reply_markup=kb.to_buy_kb)
         c = 0
         paid = False
         while True:
@@ -508,7 +553,8 @@ async def buy_month(call: CallbackQuery):
         await call.answer()
         url, payment_id = create_payment(300, 'Вип на 1 месяц')
         await bot.edit_message_text(chat_id=call.from_user.id, message_id=call.message.message_id,
-                                    text=f'<a href="{url}">Оплатить 300 рублей</a>', parse_mode='HTML')
+                                    text=f'<a href="{url}">Оплатить 300 рублей</a>', parse_mode='HTML',
+                                    reply_markup=kb.to_buy_kb)
         c = 0
         paid = False
         while True:
@@ -550,14 +596,12 @@ async def search(call: CallbackQuery, state: FSMContext):
         while True:
             await asyncio.sleep(0.5)
             if await db.find_chat(str(call.from_user.id)) is not None:
-                await db.update_connect_with(await db.find_chat(str(call.from_user.id)), str(call.from_user.id))
                 await db.update_connect_with(str(call.from_user.id), await db.find_chat(str(call.from_user.id)))
                 break
         while True:
             await asyncio.sleep(0.5)
             if await db.select_connect_with(str(call.from_user.id)) is not None:
                 await db.delete_from_queue(str(call.from_user.id))
-                await db.delete_from_queue(await db.select_connect_with(str(call.from_user.id)))
                 break
         await bot.send_message(call.from_user.id, 'Нашли для тебя собеседника 🥳\n'
                                                   '/stop - остановить диалог')
@@ -574,6 +618,98 @@ async def search(call: CallbackQuery, state: FSMContext):
                                    f'👫 Пол: {sex}\n'
                                    f'👍: {await db.select_likes(user_id)} 👎: {await db.select_dislikes(user_id)}\n', )
         await state.set_state(Chatting.msg)
+    except Exception as e:
+        errors.error(e)
+
+
+# Поиск ♂️ =============================================================================================================
+@dp.callback_query(F.data == 'search_man')
+async def search_man(call: CallbackQuery, state: FSMContext):
+    try:
+        await call.answer()
+        if datetime.strptime(await db.select_vip_ends(str(call.from_user.id)), '%d.%m.%Y %H:%M') > datetime.now():
+            await db.insert_in_queue_vip(str(call.from_user.id), await db.select_sex(str(call.from_user.id)), 'male')
+            await bot.edit_message_text(chat_id=call.from_user.id, message_id=call.message.message_id,
+                                        text='Ищем собеседника... 🔍', reply_markup=kb.cancel_search_kb)
+            while True:
+                await asyncio.sleep(0.5)
+                if await db.find_chat_vip(str(call.from_user.id), await db.select_sex(str(call.from_user.id)),
+                                          'male') is not None:
+                    await db.update_connect_with(
+                        str(call.from_user.id), await db.find_chat_vip(str(call.from_user.id),
+                                                                       await db.select_sex(str(call.from_user.id)),
+                                                                       'male'))
+                    break
+            while True:
+                await asyncio.sleep(0.5)
+                if await db.select_connect_with(str(call.from_user.id)) is not None:
+                    await db.delete_from_queue(str(call.from_user.id))
+                    break
+            await bot.send_message(call.from_user.id, 'Нашли для тебя собеседника 🥳\n'
+                                                      '/stop - остановить диалог')
+            sex = 'Неизвестно'
+            user_id = str(await db.select_connect_with(str(call.from_user.id)))
+            if await db.select_sex(user_id) == 'male':
+                sex = 'Мужской'
+            elif await db.select_sex(user_id) == 'female':
+                sex = 'Женский'
+            await bot.send_message(call.from_user.id,
+                                   f'🅰️ Имя: {await db.select_name(user_id)}\n'
+                                   f'🔞 Возраст: {await db.select_age(user_id)}\n'
+                                   f'👫 Пол: {sex}\n'
+                                   f'👍: {await db.select_likes(user_id)} 👎: {await db.select_dislikes(user_id)}\n')
+            await state.set_state(Chatting.msg)
+        else:
+            await call.answer()
+            await bot.edit_message_text(chat_id=call.from_user.id, message_id=call.message.message_id,
+                                        text='Поиск по полу доступен только для вип-пользователей',
+                                        reply_markup=kb.sex_search_no_vip_kb)
+    except Exception as e:
+        errors.error(e)
+
+
+# Поиск ♀️ =============================================================================================================
+@dp.callback_query(F.data == 'search_woman')
+async def search_woman(call: CallbackQuery, state: FSMContext):
+    try:
+        await call.answer()
+        if datetime.strptime(await db.select_vip_ends(str(call.from_user.id)), '%d.%m.%Y %H:%M') > datetime.now():
+            await db.insert_in_queue_vip(str(call.from_user.id), await db.select_sex(str(call.from_user.id)), 'female')
+            await bot.edit_message_text(chat_id=call.from_user.id, message_id=call.message.message_id,
+                                        text='Ищем собеседника... 🔍', reply_markup=kb.cancel_search_kb)
+            while True:
+                await asyncio.sleep(0.5)
+                if await db.find_chat_vip(str(call.from_user.id), await db.select_sex(str(call.from_user.id)),
+                                          'female') is not None:
+                    await db.update_connect_with(
+                        str(call.from_user.id), await db.find_chat_vip(str(call.from_user.id),
+                                                                       await db.select_sex(str(call.from_user.id)),
+                                                                       'female'))
+                    break
+            while True:
+                await asyncio.sleep(0.5)
+                if await db.select_connect_with(str(call.from_user.id)) is not None:
+                    await db.delete_from_queue(str(call.from_user.id))
+                    break
+            await bot.send_message(call.from_user.id, 'Нашли для тебя собеседника 🥳\n'
+                                                      '/stop - остановить диалог')
+            sex = 'Неизвестно'
+            user_id = str(await db.select_connect_with(str(call.from_user.id)))
+            if await db.select_sex(user_id) == 'male':
+                sex = 'Мужской'
+            elif await db.select_sex(user_id) == 'female':
+                sex = 'Женский'
+            await bot.send_message(call.from_user.id,
+                                   f'🅰️ Имя: {await db.select_name(user_id)}\n'
+                                   f'🔞 Возраст: {await db.select_age(user_id)}\n'
+                                   f'👫 Пол: {sex}\n'
+                                   f'👍: {await db.select_likes(user_id)} 👎: {await db.select_dislikes(user_id)}\n')
+            await state.set_state(Chatting.msg)
+        else:
+            await call.answer()
+            await bot.edit_message_text(chat_id=call.from_user.id, message_id=call.message.message_id,
+                                        text='Поиск по полу доступен только для вип-пользователей',
+                                        reply_markup=kb.sex_search_no_vip_kb)
     except Exception as e:
         errors.error(e)
 
@@ -611,140 +747,6 @@ async def dislike(call: CallbackQuery):
         await bot.edit_message_text(chat_id=call.from_user.id, message_id=call.message.message_id,
                                     text='Спасибо за отзыв!', reply_markup=kb.review_kb)
         await db.update_dislikes(await db.select_last_connect(str(call.from_user.id)))
-    except Exception as e:
-        errors.error(e)
-
-
-# Поиск ♂️ =============================================================================================================
-@dp.callback_query(F.data == 'search_man')
-async def search_man(call: CallbackQuery, state: FSMContext):
-    try:
-        await call.answer()
-        if datetime.strptime(await db.select_vip_ends(str(call.from_user.id)), '%d.%m.%Y %H:%M') > datetime.now():
-            await db.insert_in_queue_vip(str(call.from_user.id), await db.select_sex(str(call.from_user.id)), 'male')
-            await bot.edit_message_text(chat_id=call.from_user.id, message_id=call.message.message_id,
-                                        text='Ищем собеседника... 🔍', reply_markup=kb.cancel_search_kb)
-            while True:
-                await asyncio.sleep(0.5)
-                if await db.find_chat_vip(str(call.from_user.id), await db.select_sex(str(call.from_user.id)),
-                                          'male') is not None:
-                    await db.update_connect_with(
-                        await db.find_chat_vip(str(call.from_user.id), await db.select_sex(str(call.from_user.id)),
-                                               'male'),
-                        str(call.from_user.id))
-                    await db.update_connect_with(
-                        str(call.from_user.id), await db.find_chat_vip(str(call.from_user.id),
-                                                                       await db.select_sex(str(call.from_user.id)),
-                                                                       'male'))
-                    break
-            while True:
-                await asyncio.sleep(0.5)
-                if await db.select_connect_with(str(call.from_user.id)) is not None:
-                    await db.delete_from_queue(str(call.from_user.id))
-                    await db.delete_from_queue(await db.select_connect_with(str(call.from_user.id)))
-                    break
-            await bot.send_message(call.from_user.id, 'Нашли для тебя собеседника 🥳\n'
-                                                      '/stop - остановить диалог')
-            await bot.send_message(await db.select_connect_with(str(call.from_user.id)),
-                                   'Нашли для тебя собеседника 🥳\n'
-                                   '/stop - остановить диалог')
-            sex = 'Неизвестно'
-            user_id = str(await db.select_connect_with(str(call.from_user.id)))
-            if await db.select_sex(user_id) == 'male':
-                sex = 'Мужской'
-            elif await db.select_sex(user_id) == 'female':
-                sex = 'Женский'
-            await bot.send_message(call.from_user.id,
-                                   f'🅰️ Имя: {await db.select_name(user_id)}\n'
-                                   f'🔞 Возраст: {await db.select_age(user_id)}\n'
-                                   f'👫 Пол: {sex}\n'
-                                   f'👍: {await db.select_likes(user_id)} 👎: {await db.select_dislikes(user_id)}\n')
-            if datetime.strptime(await db.select_vip_ends(await db.select_connect_with(str(call.from_user.id))),
-                                 '%d.%m.%Y %H:%M') > datetime.now():
-                sex = 'Неизвестно'
-                user_id = call.from_user.id
-                if await db.select_sex(str(user_id)) == 'male':
-                    sex = 'Мужской'
-                elif await db.select_sex(str(user_id)) == 'female':
-                    sex = 'Женский'
-                await bot.send_message(await db.select_connect_with(str(call.from_user.id)),
-                                       f'🅰️ Имя: {await db.select_name(str(user_id))}\n'
-                                       f'🔞 Возраст: {await db.select_age(str(user_id))}\n'
-                                       f'👫 Пол: {sex}\n'
-                                       f'👍: {await db.select_likes(str(user_id))} 👎: {await db.select_dislikes(str(user_id))}\n')
-                await state.set_state(Chatting.msg)
-        else:
-            await call.answer()
-            await bot.edit_message_text(chat_id=call.from_user.id, message_id=call.message.message_id,
-                                        text='Поиск по полу доступен только для вип-пользователей',
-                                        reply_markup=kb.sex_search_no_vip_kb)
-    except Exception as e:
-        errors.error(e)
-
-
-# Поиск ♀️ =============================================================================================================
-@dp.callback_query(F.data == 'search_woman')
-async def search_woman(call: CallbackQuery, state: FSMContext):
-    try:
-        await call.answer()
-        if datetime.strptime(await db.select_vip_ends(str(call.from_user.id)), '%d.%m.%Y %H:%M') > datetime.now():
-            await db.insert_in_queue_vip(str(call.from_user.id), await db.select_sex(str(call.from_user.id)), 'female')
-            await bot.edit_message_text(chat_id=call.from_user.id, message_id=call.message.message_id,
-                                        text='Ищем собеседника... 🔍', reply_markup=kb.cancel_search_kb)
-            while True:
-                await asyncio.sleep(0.5)
-                if await db.find_chat_vip(str(call.from_user.id), await db.select_sex(str(call.from_user.id)),
-                                          'female') is not None:
-                    await db.update_connect_with(
-                        await db.find_chat_vip(str(call.from_user.id), await db.select_sex(str(call.from_user.id)),
-                                               'female'),
-                        str(call.from_user.id))
-                    await db.update_connect_with(
-                        str(call.from_user.id), await db.find_chat_vip(str(call.from_user.id),
-                                                                       await db.select_sex(str(call.from_user.id)),
-                                                                       'female'))
-                    break
-            while True:
-                await asyncio.sleep(0.5)
-                if await db.select_connect_with(str(call.from_user.id)) is not None:
-                    await db.delete_from_queue(str(call.from_user.id))
-                    await db.delete_from_queue(await db.select_connect_with(str(call.from_user.id)))
-                    break
-            await bot.send_message(call.from_user.id, 'Нашли для тебя собеседника 🥳\n'
-                                                      '/stop - остановить диалог')
-            await bot.send_message(await db.select_connect_with(str(call.from_user.id)),
-                                   'Нашли для тебя собеседника 🥳\n'
-                                   '/stop - остановить диалог')
-            sex = 'Неизвестно'
-            user_id = str(await db.select_connect_with(str(call.from_user.id)))
-            if await db.select_sex(user_id) == 'male':
-                sex = 'Мужской'
-            elif await db.select_sex(user_id) == 'female':
-                sex = 'Женский'
-            await bot.send_message(call.from_user.id,
-                                   f'🅰️ Имя: {await db.select_name(user_id)}\n'
-                                   f'🔞 Возраст: {await db.select_age(user_id)}\n'
-                                   f'👫 Пол: {sex}\n'
-                                   f'👍: {await db.select_likes(user_id)} 👎: {await db.select_dislikes(user_id)}\n')
-            if datetime.strptime(await db.select_vip_ends(await db.select_connect_with(str(call.from_user.id))),
-                                 '%d.%m.%Y %H:%M') > datetime.now():
-                sex = 'Неизвестно'
-                user_id = str(call.from_user.id)
-                if await db.select_sex(user_id) == 'male':
-                    sex = 'Мужской'
-                elif await db.select_sex(user_id) == 'female':
-                    sex = 'Женский'
-                await bot.send_message(await db.select_connect_with(str(call.from_user.id)),
-                                       f'🅰️ Имя: {await db.select_name(user_id)}\n'
-                                       f'🔞 Возраст: {await db.select_age(user_id)}\n'
-                                       f'👫 Пол: {sex}\n'
-                                       f'👍: {await db.select_likes(user_id)} 👎: {await db.select_dislikes(user_id)}\n')
-                await state.set_state(Chatting.msg)
-        else:
-            await call.answer()
-            await bot.edit_message_text(chat_id=call.from_user.id, message_id=call.message.message_id,
-                                        text='Поиск по полу доступен только для вип-пользователей',
-                                        reply_markup=kb.sex_search_no_vip_kb)
     except Exception as e:
         errors.error(e)
 
@@ -796,7 +798,6 @@ async def stop(message: Message, state: FSMContext):
 @dp.message(Chatting.msg, F.text)
 async def chatting_text(message: Message):
     try:
-        print(await db.select_connect_with(str(message.from_user.id)))
         await bot.send_message(await db.select_connect_with(str(message.from_user.id)), message.text)
         await db.insert_in_messages(str(message.from_user.id), message.from_user.username, message.text,
                                     datetime.now().strftime('%d.%m.%Y %H:%M:%S'))
@@ -882,6 +883,34 @@ async def chatting_video_note(message: Message):
 async def chatting_unknown(message):
     try:
         await message.answer('Этот тип контента пока не поддерживается 😢.')
+    except Exception as e:
+        errors.error(e)
+
+
+# id ===================================================================================================================
+@dp.message(Command('id'))
+async def ids(message: Message):
+    try:
+        await message.answer(str(message.from_user.id))
+    except Exception as e:
+        errors.error(e)
+
+
+# group id =============================================================================================================
+@dp.message(Command('gid'))
+async def gids(message: Message):
+    try:
+        await message.answer(str(message.chat.id))
+    except Exception as e:
+        errors.error(e)
+
+
+# all ==================================================================================================================
+@dp.message()
+async def all(message: Message):
+    try:
+        if str(message.chat.id) not in [BUGS_GROUP_ID, IDEAS_GROUP_ID]:
+            await message.answer('Команда не распознана. Отправьте /start для выхода в главное меню.')
     except Exception as e:
         errors.error(e)
 

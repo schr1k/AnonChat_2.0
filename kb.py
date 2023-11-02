@@ -6,16 +6,20 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 to_main = InlineKeyboardButton(text='🔙 На главную', callback_data='to_main')
 to_ref = InlineKeyboardButton(text='🔙 Назад', callback_data='ref')
 to_profile = InlineKeyboardButton(text='🔙 Назад', callback_data='profile')
+to_settings = InlineKeyboardButton(text='🔙 Назад', callback_data='settings')
 to_stats = InlineKeyboardButton(text='🔙 Назад', callback_data='stats')
 to_tops = InlineKeyboardButton(text='🔙 Назад', callback_data='tops')
 to_vip = InlineKeyboardButton(text='🔙 Назад', callback_data='vip')
 to_lobby = InlineKeyboardButton(text='🔙 Назад', callback_data='lobby')
+to_buy = InlineKeyboardButton(text='🔙 Назад', callback_data='buy_vip')
 
 
 to_main_kb = InlineKeyboardBuilder().add(to_main).as_markup()
 to_ref_kb = InlineKeyboardBuilder().add(to_ref).as_markup()
+to_settings_kb = InlineKeyboardBuilder().add(to_settings).as_markup()
 to_tops_kb = InlineKeyboardBuilder().add(to_tops).as_markup()
 to_lobby_kb = InlineKeyboardBuilder().add(to_lobby).as_markup()
+to_buy_kb = InlineKeyboardBuilder().add(to_buy).as_markup()
 
 
 # Отмена ===============================================================================================================
