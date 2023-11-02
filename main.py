@@ -27,7 +27,7 @@ storage = RedisStorage(redis)
 bot = Bot(token=TOKEN)
 dp = Dispatcher(storage=storage)
 
-logging.basicConfig(filename="all.log", level=logging.INFO, stream=sys.stdout,
+logging.basicConfig(filename="all.log", level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(filename)s function: %(funcName)s line: %(lineno)d - %(message)s')
 errors = logging.getLogger("errors")
 errors.setLevel(logging.ERROR)
