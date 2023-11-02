@@ -1,4 +1,4 @@
-from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.fsm.state import State, StatesGroup
 
 
 class RegState(StatesGroup):
@@ -25,4 +25,12 @@ class SexState(StatesGroup):
 
 class Search(StatesGroup):
     searching = State()
+
+
+class Bug(StatesGroup):
+    bug = State()
+
+
+class Idea(StatesGroup):
+    idea = State()
 
