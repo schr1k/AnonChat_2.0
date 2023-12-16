@@ -19,9 +19,11 @@ from payments import *
 
 db = DB()
 
-redis = Redis(host=REDIS_HOST,
-              port=REDIS_PORT,
-              db=REDIS_DB)
+redis = Redis(
+    host=REDIS_HOST,
+    port=REDIS_PORT,
+    db=REDIS_DB,
+)
 storage = RedisStorage(redis)
 
 bot = Bot(token=TOKEN)
@@ -33,7 +35,6 @@ errors = logging.getLogger("errors")
 errors.setLevel(logging.ERROR)
 fh = logging.FileHandler("errors.log")
 formatter = logging.Formatter(
-
     '%(asctime)s - %(levelname)s - %(filename)s function: %(funcName)s line: %(lineno)d - %(message)s')
 fh.setFormatter(formatter)
 errors.addHandler(fh)

@@ -1,6 +1,6 @@
 import json
 
-from config import *
+from config import RETURN_URL, YOOKASSA_ACCOUNT_ID, YOOKASSA_SECRET_KEY
 
 from yookassa import Configuration, Payment
 import uuid
@@ -30,12 +30,12 @@ def create_payment(amount: int, description: str) -> tuple[str, str]:
     return payment.confirmation.confirmation_url, payment.id
 
 
-def get_payment_status(payment_id: str):
+def get_payment_status(payment_id: str) -> str:
     payment = Payment.find_one(payment_id)
     return json.loads(payment.json())['status']
 
 
-def confirm_payment(payment_id: str):
+def confirm_payment(payment_id: str) -> str:
     idempotence_key = str(uuid.uuid4())
     response = Payment.capture(
         payment_id,

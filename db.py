@@ -241,6 +241,12 @@ class DB:
                     top_dict[number + 1] = {'name': dict(value)['name'], 'count': dict(value)['likes']}
                 return top_dict
 
+    async def count_users(self) -> int:
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                result = await connection.fetchval('SELECT COUNT(tg) FROM users')
+                return result
+
     # UPDATE ===========================================================================================================
     async def update_name(self, tg: str, name: str):
         async with self.pool.acquire() as connection:

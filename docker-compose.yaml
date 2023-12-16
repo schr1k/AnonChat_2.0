@@ -1,0 +1,70 @@
+services:
+    postgres:
+        container_name:
+            postgres
+        image:
+            postgres:alpine
+        ports:
+            - ${POSTGRES_PORT}
+        restart:
+            unless-stopped
+        volumes:
+            - postgres-data:/var/lib/postgresql/data
+        env_file:
+            .env
+        healthcheck:
+            test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
+        deploy:
+            resources:
+                limits:
+                    cpus: "0.1"
+                    memory: 100mb
+    redis:
+        container_name:
+            redis
+        image:
+            redis:alpine
+        ports:
+            - ${POSTGRES_PORT}
+        restart:
+            unless-stopped
+        volumes:
+            - redis-data:/var/lib/redis/data
+        env_file:
+            .env
+        healthcheck:
+            test: ["CMD-SHELL", "redis-cli PING | grep PONG"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
+        deploy:
+            resources:
+                limits:
+                    cpus: "0.1"
+                    memory: 100mb
+    bot:
+        container_name:
+            bot
+        build:
+            context:
+               .
+            dockerfile:
+                Dockerfile
+        restart:
+            unless-stopped
+        depends_on:
+            - redis
+            - postgres
+        deploy:
+            resources:
+                limits:
+                    cpus: "0.2"
+                    memory: 200mb
+volumes:
+    postgres-data:
+    redis-data:
