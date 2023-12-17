@@ -29,7 +29,7 @@ services:
         image:
             redis:alpine
         ports:
-            - ${POSTGRES_PORT}
+            - ${REDIS_PORT}
         restart:
             unless-stopped
         volumes:
