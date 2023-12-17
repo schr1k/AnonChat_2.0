@@ -1,3 +1,5 @@
+> Readme на русском доступно [здесь](./README_ru.md).
+
 ## Overview:
 * Project is **completely asynchronous** thanks to [aiogram](https://github.com/aiogram/aiogram), [asyncpg](https://github.com/MagicStack/asyncpg) and [redis asyncio](https://github.com/redis/redis-py).
 * It's easy to test and debug because 2 levels of logging are provided.
@@ -5,8 +7,8 @@
 
 ### Setup:
 1. Telegram:
-    * Create new bot via [BotFather](https://t.me/BotFather).
-    * Create groups (not channels) for bug reports and ideas, add your bot to them and give him admin rights (to get group id forward a message from it to this [bot](https://t.me/getmyid_bot)).
+   * Create new bot via [BotFather](https://t.me/BotFather).
+   * Create groups (not channels) for bug reports and ideas, add your bot to them and give him admin rights (to get group id forward a message from it to this [bot](https://t.me/getmyid_bot)).
 
 2. Create yookassa [test shop](https://yookassa.ru/my/boarding?shopMenuAction=createShop).
 
@@ -75,7 +77,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-4. Install [Redis](https://redis.io/docs/getting-started/installation/) (follow this [guide](https://shyammakwana.me/redis/set-redis-password-in-windows-and-ubuntu.html) to set up user and password for redis).
+4. Install [Redis](https://redis.io/docs/getting-started/installation/).
 
 5. Install [Postgres](https://www.postgresql.org/download/) (if you changed user or password during installation make sure to also change it in [.env file](./.env)).
 
