@@ -87,6 +87,6 @@ python main.py
 ```
 
 ---
-Если у вас есть вопросы или предложения пишите их [здесь](https://github.com/schr1k/AnonChat_2.0/issues).
+Вы можете [задать вопрос](https://github.com/schr1k/AnonChat_2.0/discussions/categories/q-a) или [поделиться идеей](https://github.com/schr1k/AnonChat_2.0/discussions/categories/ideas) о проекте.
 
 Планы по проекту находятся [здесь](https://github.com/users/schr1k/projects/3).
