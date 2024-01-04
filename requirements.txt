@@ -1,4 +1,4 @@
-aiogram==3.2.0
+aiogram==3.3.0
 asyncpg==0.29.0
 redis==5.0.1
 yookassa==3.0.0
