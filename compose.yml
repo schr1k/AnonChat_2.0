@@ -3,7 +3,7 @@ services:
         container_name:
             postgres
         image:
-            postgres:alpine
+            postgres-17:alpine
         ports:
             - ${POSTGRES_PORT}
         restart:
@@ -21,13 +21,13 @@ services:
         deploy:
             resources:
                 limits:
-                    cpus: "0.1"
-                    memory: 100mb
+                    cpus: "1"
+                    memory: 1000mb
     redis:
         container_name:
             redis
         image:
-            redis:alpine
+            redis-7:alpine
         ports:
             - ${REDIS_PORT}
         restart:
@@ -63,8 +63,8 @@ services:
         deploy:
             resources:
                 limits:
-                    cpus: "0.2"
-                    memory: 200mb
+                    cpus: "4"
+                    memory: 4000mb
 volumes:
     postgres-data:
     redis-data:

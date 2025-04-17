@@ -58,18 +58,18 @@ That's all! [Docker compose file](./docker-compose.yaml) will install and config
 Alternatively you can run it manually:
 1. Create venv:
 ```bash
-python -m venv venv
+python -m venv .venv
 ```
 
 2. Activate venv:
 
 * On Windows:
 ```bash
-venv\Scripts\activate
+.venv\Scripts\activate
 ```
 * On Linux and macOS:
 ```bash
-source venv/bin/activate
+source .venv/bin/activate
 ```
 
 3. Install dependencies:

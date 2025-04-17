@@ -1,9 +1,11 @@
-FROM python:3.11-alpine
+FROM python:3.13-alpine
 
 WORKDIR /app
 
-COPY . .
+COPY requirements.txt ./
 
 RUN pip install -r requirements.txt
 
-CMD ["python3.11", "main.py"]
+COPY . .
+
+CMD [ "python3.13", "main.py" ]

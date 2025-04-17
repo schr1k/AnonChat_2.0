@@ -58,18 +58,18 @@ docker compose up
 Также вы можете запустить проект вручную:
 1. Создайте виртуальное окружение:
 ```bash
-python -m venv venv
+python -m venv .venv
 ```
 
 2. Активируйте виртуальное окружение:
 
 * Windows:
 ```bash
-venv\Scripts\activate
+.venv\Scripts\activate
 ```
 * Linux и macOS:
 ```bash
-source venv/bin/activate
+source .venv/bin/activate
 ```
 
 3. Установите зависимости:
